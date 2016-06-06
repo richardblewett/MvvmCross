@@ -9,8 +9,11 @@ namespace MvvmCross.Platform
     {
         public static IEnumerable<Type> GetTypes(this Assembly assembly)
         {
+            var toReturn = new List<Type>();
             foreach (var type in assembly.DefinedTypes)
-                yield return type.AsType();
+                toReturn.Add(type.AsType());
+
+            return toReturn;
         }
 
         public static EventInfo GetEvent(this Type type, string name)
@@ -37,9 +40,12 @@ namespace MvvmCross.Platform
         {
             var ctors = type.GetTypeInfo().DeclaredConstructors;
 
+            var toReturn = new List<ConstructorInfo>();
             foreach(var ctor in ctors)
                 if (ctor.IsPublic)
-                    yield return ctor;
+                    toReturn.Add(ctor);
+
+            return toReturn;
         }
 
         public static bool IsInstanceOfType(this Type type, object obj)
@@ -119,6 +125,7 @@ namespace MvvmCross.Platform
                 properties = type.GetRuntimeProperties();
             }
 
+            var toReturn = new List<PropertyInfo>();
             foreach (var property in properties)
             {
                 var getMethod = property.GetMethod;
@@ -136,9 +143,11 @@ namespace MvvmCross.Platform
 
                 if (publicTest && instanceTest && staticTest)
                 {
-                    yield return property;
+                    toReturn.Add(property);
                 }
             }
+
+            return toReturn;
         }
 
         public static PropertyInfo GetProperty(this Type type, string name, BindingFlags flags)
@@ -176,6 +185,7 @@ namespace MvvmCross.Platform
                 methods = type.GetRuntimeMethods();
             }
 
+            var toReturn = new List<MethodInfo>();
             foreach (var method in methods)
             {
                 var publicTest = (flags & BindingFlags.Public) != BindingFlags.Public || method.IsPublic;
@@ -183,8 +193,10 @@ namespace MvvmCross.Platform
                 var staticTest = (flags & BindingFlags.Static) != BindingFlags.Static || method.IsStatic;
 
                 if (publicTest && instanceTest && staticTest)
-                    yield return method;
+                    toReturn.Add(method);
             }
+
+            return toReturn;
         }
 
         public static MethodInfo GetMethod(this Type type, string name, BindingFlags flags)
@@ -216,6 +228,7 @@ namespace MvvmCross.Platform
         {
             var ctors = type.GetConstructors();
 
+            var toReturn = new List<ConstructorInfo>();
             foreach (var ctor in ctors)
             {
                 var publicTest = (flags & BindingFlags.Public) != BindingFlags.Public || ctor.IsPublic;
@@ -223,8 +236,10 @@ namespace MvvmCross.Platform
                 var staticTest = (flags & BindingFlags.Static) != BindingFlags.Static || ctor.IsStatic;
 
                 if (publicTest && instanceTest && staticTest)
-                    yield return ctor;
+                    toReturn.Add(ctor);
             }
+
+            return toReturn;
         }
 
         public static IEnumerable<FieldInfo> GetFields(this Type type)
@@ -240,6 +255,7 @@ namespace MvvmCross.Platform
                 fields = type.GetRuntimeFields();
             }
 
+            var toReturn = new List<FieldInfo>();
             foreach (var field in fields)
             {
                 var publicTest = (flags & BindingFlags.Public) != BindingFlags.Public || field.IsPublic;
@@ -247,8 +263,10 @@ namespace MvvmCross.Platform
                 var staticTest = (flags & BindingFlags.Static) != BindingFlags.Static || field.IsStatic;
 
                 if (publicTest && instanceTest && staticTest)
-                    yield return field;
+                    toReturn.Add(field);
             }
+
+            return toReturn;
         }
 
         public static FieldInfo GetField(this Type type, string name, BindingFlags flags)
