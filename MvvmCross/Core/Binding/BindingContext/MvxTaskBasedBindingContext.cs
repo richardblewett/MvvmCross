@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using MvvmCross.Binding.Binders;
 using MvvmCross.Binding.Bindings;
@@ -16,6 +17,7 @@ namespace MvvmCross.Binding.BindingContext
         private readonly List<Action> _delayedActions = new List<Action>();
         private readonly List<MvxBindingContext.TargetAndBinding> _directBindings = new List<MvxBindingContext.TargetAndBinding>();
         private readonly List<KeyValuePair<object, IList<MvxBindingContext.TargetAndBinding>>> _viewBindings = new List<KeyValuePair<object, IList<MvxBindingContext.TargetAndBinding>>>();
+        private readonly object _contextChangedGuard = new object();
         private object _dataContext;
         private IMvxBinder _binder;
 
@@ -119,17 +121,25 @@ namespace MvvmCross.Binding.BindingContext
 
             Action setBindingsAction = (() =>
                 {
-                    foreach (var binding in this._viewBindings)
+                    // we need to make sure two threads don't start this process at the same time
+                    // as a second thread, with scheduling, could end up completing before the first 
+                    // and then the first will apply the wrong data context to some of the bindings
+                    lock (_contextChangedGuard)
                     {
-                        foreach (var bind in binding.Value)
+                        // Copy the lists to ensure that if the main thread modifies the collection
+                        // we don't get an InvalidOperationException. Issue: #1398
+                        foreach (var binding in this._viewBindings.ToList())
                         {
-                            bind.Binding.DataContext = this._dataContext;
+                            foreach (var bind in binding.Value.ToList())
+                            {
+                                bind.Binding.DataContext = this._dataContext;
+                            }
                         }
-                    }
 
-                    foreach (var binding in this._directBindings)
-                    {
-                        binding.Binding.DataContext = this._dataContext;
+                        foreach (var binding in this._directBindings.ToList())
+                        {
+                            binding.Binding.DataContext = this._dataContext;
+                        }
                     }
                 });
 
